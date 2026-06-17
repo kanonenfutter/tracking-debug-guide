@@ -1,0 +1,703 @@
+<!-- MIT License · Copyright (c) 2026 luna-park GmbH · See LICENSE file -->
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tracking Debug Guide</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f4f6f8;--surface:#fff;--border:#e2e8f0;--border-d:#cbd5e1;
+  --t1:#0f172a;--t2:#475569;--t3:#94a3b8;
+  --blue:#2563eb;--blue-bg:#eff6ff;--blue-bd:#bfdbfe;--blue-t:#1e40af;
+  --yellow-bg:#fffbeb;--yellow-bd:#fde68a;--yellow-t:#92400e;
+  --green-bg:#f0fdf4;--green-bd:#bbf7d0;--green-t:#166534;
+  --purple-bg:#faf5ff;--purple-bd:#e9d5ff;--purple-t:#6b21a8;
+  --r:10px;--r-lg:14px
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;padding:32px 16px 64px;line-height:1.5}
+.container{max-width:720px;margin:0 auto}
+.page-badge{display:inline-flex;align-items:center;gap:6px;background:var(--blue-bg);border:1px solid var(--blue-bd);color:var(--blue);font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:3px 10px;border-radius:20px;margin-bottom:12px}
+.page-title{font-size:24px;font-weight:700;letter-spacing:-.3px;margin-bottom:6px}
+.page-sub{font-size:15px;color:var(--t2);margin-bottom:32px}
+.stepper{display:flex;align-items:center;margin-bottom:28px}
+.step-item{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--t3)}
+.step-item.active{color:var(--blue)}.step-item.done{color:var(--green-t)}
+.step-dot{width:26px;height:26px;border-radius:50%;background:var(--border);color:var(--t3);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.step-item.active .step-dot{background:var(--blue);color:#fff}
+.step-item.done .step-dot{background:var(--green-bg);color:var(--green-t);border:1px solid var(--green-bd)}
+.step-line{flex:1;height:1px;background:var(--border);margin:0 6px}
+.step-label{font-weight:500}
+.s-label{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--t3);margin-bottom:12px}
+.s-question{font-size:18px;font-weight:600;color:var(--t1);margin-bottom:18px}
+.vendor-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:520px){.vendor-grid{grid-template-columns:repeat(2,1fr)}}
+.v-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);padding:14px 16px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:border-color .15s,background .15s,transform .1s;user-select:none}
+.v-card:hover{border-color:var(--blue);background:var(--blue-bg);transform:translateY(-1px)}
+.v-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.v-name{font-size:13px;font-weight:500;color:var(--t1)}
+.type-grid{display:flex;gap:10px;flex-wrap:wrap}
+.t-btn{flex:1;min-width:160px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);padding:16px 18px;cursor:pointer;text-align:left;transition:border-color .15s,background .15s,transform .1s;user-select:none;font-family:inherit}
+.t-btn:hover{border-color:var(--blue);background:var(--blue-bg);transform:translateY(-1px)}
+.t-btn-name{display:block;font-size:15px;font-weight:600;color:var(--t1);margin-bottom:4px}
+.t-btn-desc{display:block;font-size:12px;color:var(--t2);line-height:1.5}
+.back-btn{background:none;border:none;color:var(--t2);font-size:13px;cursor:pointer;padding:0;display:inline-flex;align-items:center;gap:5px;margin-bottom:22px;font-family:inherit}
+.back-btn:hover{color:var(--t1)}
+.breadcrumb{display:flex;align-items:center;gap:6px;margin-bottom:22px;font-size:13px}
+.bc-sep{color:var(--t3)}.bc-item{color:var(--t3)}.bc-current{color:var(--t1);font-weight:600}
+.bc-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px}
+.r-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);margin-bottom:12px;overflow:hidden}
+.r-card-head{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--border)}
+.r-card-ico{width:32px;height:32px;border-radius:8px;background:var(--blue-bg);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.r-card-title{font-size:14px;font-weight:600;color:var(--t1)}
+.r-card-body{padding:16px}
+.tool-tag{display:inline-flex;align-items:center;gap:5px;background:#f1f5f9;border:1px solid var(--border);color:var(--t2);font-size:12px;font-weight:500;padding:3px 10px;border-radius:20px;margin:3px 4px 3px 0}
+.steps-list{list-style:none}
+.steps-list li{display:flex;gap:10px;margin-bottom:10px;font-size:13px;color:var(--t2);line-height:1.6}
+.steps-list li:last-child{margin-bottom:0}
+.s-num{width:20px;height:20px;border-radius:50%;background:var(--blue);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.ep-label{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--t3);margin-bottom:4px;margin-top:12px}
+.ep-label:first-child{margin-top:0}
+.ep-box{background:#f8fafc;border:1px solid var(--border);border-radius:6px;padding:8px 12px;display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.ep-url{font-family:'Consolas','Menlo',monospace;font-size:12px;color:var(--t2);flex:1;word-break:break-all}
+.m-badge{font-size:10px;font-weight:700;letter-spacing:.05em;padding:2px 7px;border-radius:4px;flex-shrink:0}
+.m-get{background:#dcfce7;color:#166534}.m-post{background:#fef3c7;color:#92400e}.m-both{background:#e0f2fe;color:#0369a1}
+.filter-box{display:flex;align-items:center;gap:8px;background:#f8fafc;border:1px solid var(--border);border-radius:6px;padding:7px 12px;margin-top:8px;font-size:12px}
+.f-label{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);flex-shrink:0}
+.f-val{font-family:'Consolas','Menlo',monospace;color:var(--blue);font-weight:600}
+.recognize-text{font-size:13px;color:var(--t2);margin-bottom:14px;line-height:1.6}
+.recognize-text code{background:#f1f5f9;border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-family:'Consolas','Menlo',monospace;font-size:11px;color:var(--t1)}
+.steps-list li code{background:#f1f5f9;border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-family:'Consolas','Menlo',monospace;font-size:11px;color:var(--t1)}
+.param-table{width:100%;border-collapse:collapse;font-size:13px}
+.param-table thead th{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);text-align:left;padding:0 16px 8px 0;border-bottom:1px solid var(--border)}
+.param-table thead th:last-child{padding-right:0}
+.param-table tbody td{padding:9px 16px 9px 0;border-bottom:1px solid var(--border);vertical-align:top}
+.param-table tbody tr:last-child td{border-bottom:none}
+.param-table tbody td:last-child{padding-right:0}
+.p-key{font-family:'Consolas','Menlo',monospace;font-size:12px;color:var(--blue);font-weight:600;white-space:nowrap}
+.p-name{font-weight:500;color:var(--t1);margin-bottom:2px}
+.p-desc{color:var(--t2);font-size:12px;line-height:1.5}
+.p-ex{font-family:'Consolas','Menlo',monospace;font-size:11px;color:var(--t3);display:block;margin-top:3px}
+.note{display:flex;gap:10px;border-radius:8px;padding:11px 14px;margin-top:12px;font-size:13px;line-height:1.6}
+.n-warn{background:var(--yellow-bg);border:1px solid var(--yellow-bd);color:var(--yellow-t)}
+.n-info{background:var(--blue-bg);border:1px solid var(--blue-bd);color:var(--blue-t)}
+.n-ok{background:var(--green-bg);border:1px solid var(--green-bd);color:var(--green-t)}
+.n-purple{background:var(--purple-bg);border:1px solid var(--purple-bd);color:var(--purple-t)}
+.n-error{background:#fff1f2;border:1px solid #fecdd3;color:#9f1239}
+.err-code{background:rgba(0,0,0,.06);border-radius:4px;padding:6px 10px;font-family:'Consolas','Menlo',monospace;font-size:11px;display:block;margin:8px 0;line-height:1.6;word-break:break-all;color:inherit}
+.note-ico{font-size:15px;flex-shrink:0;margin-top:1px}
+.note b{font-weight:600}
+.note code{background:rgba(0,0,0,.08);border-radius:3px;padding:1px 4px;font-family:'Consolas','Menlo',monospace;font-size:11px}
+.hybrid-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+@media(max-width:480px){.hybrid-grid{grid-template-columns:1fr}}
+.hybrid-col{border-radius:8px;padding:14px}
+.h-client{background:var(--blue-bg);border:1px solid var(--blue-bd)}
+.h-server{background:var(--purple-bg);border:1px solid var(--purple-bd)}
+.hybrid-col-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px}
+.h-client .hybrid-col-title{color:var(--blue-t)}
+.h-server .hybrid-col-title{color:var(--purple-t)}
+.h-client .s-num{background:#1d4ed8}
+.h-server .s-num{background:#7c3aed}
+.reset-btn{display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid var(--border);border-radius:6px;color:var(--t2);font-size:13px;font-family:inherit;cursor:pointer;padding:6px 14px;margin-top:24px;transition:background .15s,border-color .15s}
+.reset-btn:hover{background:var(--surface);border-color:var(--border-d);color:var(--t1)}
+.footer{margin-top:48px;padding-top:24px;border-top:1px solid var(--border);font-size:12px;color:var(--t3);text-align:center}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="page-header">
+  <div class="page-badge">Debug Guide</div>
+  <h1 class="page-title">Tracking Debug Guide</h1>
+  <p class="page-sub">Vendor und Tracking-Methode wählen – passende Debugging-Anleitung erhalten.</p>
+</div>
+
+<!-- STEP 1 -->
+<div id="step1">
+  <div class="stepper">
+    <div class="step-item active"><div class="step-dot">1</div><span class="step-label">Vendor</span></div>
+    <div class="step-line"></div>
+    <div class="step-item"><div class="step-dot">2</div><span class="step-label">Methode</span></div>
+    <div class="step-line"></div>
+    <div class="step-item"><div class="step-dot">3</div><span class="step-label">Anleitung</span></div>
+  </div>
+  <p class="s-label">Schritt 1 von 3</p>
+  <p class="s-question">Welchen Vendor möchtest du prüfen?</p>
+  <div class="vendor-grid">
+    <div class="v-card" onclick="selectVendor('ga4')"><div class="v-dot" style="background:#ea4335"></div><span class="v-name">Google Analytics 4</span></div>
+    <div class="v-card" onclick="selectVendor('googleads')"><div class="v-dot" style="background:#4285f4"></div><span class="v-name">Google Ads</span></div>
+    <div class="v-card" onclick="selectVendor('floodlight')"><div class="v-dot" style="background:#34a853"></div><span class="v-name">Floodlight (CM360)</span></div>
+    <div class="v-card" onclick="selectVendor('facebook')"><div class="v-dot" style="background:#1877f2"></div><span class="v-name">Facebook / Meta Ads</span></div>
+    <div class="v-card" onclick="selectVendor('bing')"><div class="v-dot" style="background:#008272"></div><span class="v-name">Bing / Microsoft Ads</span></div>
+    <div class="v-card" onclick="selectVendor('linkedin')"><div class="v-dot" style="background:#0077b5"></div><span class="v-name">LinkedIn Ads</span></div>
+  </div>
+</div>
+
+<!-- STEP 2 -->
+<div id="step2" class="hidden">
+  <div class="stepper">
+    <div class="step-item done"><div class="step-dot">✓</div><span class="step-label">Vendor</span></div>
+    <div class="step-line"></div>
+    <div class="step-item active"><div class="step-dot">2</div><span class="step-label">Methode</span></div>
+    <div class="step-line"></div>
+    <div class="step-item"><div class="step-dot">3</div><span class="step-label">Anleitung</span></div>
+  </div>
+  <button class="back-btn" onclick="goBack(1)">← Zurück</button>
+  <p class="s-label">Schritt 2 von 3</p>
+  <p class="s-question">Welche Tracking-Methode wird verwendet?</p>
+  <div class="type-grid" id="type-grid"></div>
+</div>
+
+<!-- STEP 3 -->
+<div id="step3" class="hidden">
+  <div class="stepper">
+    <div class="step-item done"><div class="step-dot">✓</div><span class="step-label">Vendor</span></div>
+    <div class="step-line"></div>
+    <div class="step-item done"><div class="step-dot">✓</div><span class="step-label">Methode</span></div>
+    <div class="step-line"></div>
+    <div class="step-item active"><div class="step-dot">3</div><span class="step-label">Anleitung</span></div>
+  </div>
+  <button class="back-btn" onclick="goBack(2)">← Zurück</button>
+  <div class="breadcrumb" id="breadcrumb"></div>
+  <div id="result-content"></div>
+  <button class="reset-btn" onclick="goBack(1)">← Neue Suche starten</button>
+</div>
+
+<div class="footer">Tracking Debug Guide &middot; Intern &middot; luna-park GmbH</div>
+</div>
+
+<script>
+const state = { vendor: null, type: null };
+
+const VENDORS = {
+  ga4:        { name: 'Google Analytics 4',    color: '#ea4335', types: [{ id:'clientside', label:'Clientside', desc:'GA4-Tag feuert direkt im Browser über den GTM.' }, { id:'serverside', label:'Serverside', desc:'GA4-Event geht über den Browser an den sGTM, der es an Google Analytics weiterleitet.' }] },
+  googleads:  { name: 'Google Ads',            color: '#4285f4', types: [{ id:'clientside', label:'Clientside', desc:'Conversion-Tag feuert direkt im Browser über den GTM.' }, { id:'serverside', label:'Serverside', desc:'Conversion wird via GA4-Event als Trigger im sGTM ausgelöst.' }] },
+  floodlight: { name: 'Floodlight (CM360)',    color: '#34a853', types: [{ id:'clientside', label:'Clientside', desc:'Floodlight-Tag feuert direkt im Browser über den GTM.' }, { id:'serverside', label:'Serverside', desc:'Floodlight-Conversion wird via sGTM ausgelöst.' }] },
+  facebook:   { name: 'Facebook / Meta Ads',   color: '#1877f2', types: [{ id:'clientside', label:'Clientside', desc:'Facebook Pixel feuert direkt im Browser über den GTM.' }, { id:'serverside', label:'Serverside', desc:'Event wird über die Conversions API im sGTM gesendet.' }, { id:'hybrid', label:'Hybrid', desc:'Pixel und CAPI laufen parallel – Deduplikation über identischen Eventnamen und Event ID.' }] },
+  bing:       { name: 'Bing / Microsoft Ads',  color: '#008272', types: [{ id:'clientside', label:'Clientside', desc:'UET-Tag feuert direkt im Browser über den GTM.' }, { id:'serverside', label:'Serverside', desc:'Event wird über die UET API im sGTM gesendet.' }] },
+  linkedin:   { name: 'LinkedIn Ads',          color: '#0077b5', types: [{ id:'clientside', label:'Clientside', desc:'LinkedIn Insight Tag feuert direkt im Browser.' }, { id:'serverside', label:'Serverside', desc:'Conversion wird über sGTM an die LinkedIn Conversions API gesendet.' }, { id:'hybrid', label:'Hybrid', desc:'Zwei Conversion-IDs: Clientside-Pixel und Serverside-API laufen parallel.' }] }
+};
+
+const CONSENT_GOOGLE = { type:'info', ico:'🔒', text:'<b>Consent Mode (v2) prüfen:</b> Die Parameter <code>gcs</code> und <code>gcd</code> zeigen den Einwilligungsstatus. <code>gcs=G1XY</code> – die Ziffer <b>X</b> steht für <code>ad_storage</code>, <b>Y</b> für <code>analytics_storage</code> (<b>1</b> = granted, <b>0</b> = denied). Beispiele: <code>G111</code> = beides erlaubt, <code>G100</code> = beides abgelehnt. Bei abgelehntem Consent sendet Google nur anonyme „Cookieless Pings" – fehlende oder eingeschränkte Daten sind dann <b>kein Setup-Fehler</b>, sondern Folge der Einwilligung.' };
+const CONSENT_GOOGLE_SS = { type:'info', ico:'🔒', text:'<b>Consent Mode (v2) im sGTM:</b> Der Einwilligungsstatus wird über <code>gcs</code> / <code>gcd</code> im eingehenden GA4-Request an den sGTM übergeben und von dort an das jeweilige Tag weitergereicht. Bei abgelehntem Consent werden Daten eingeschränkt oder nur als anonymer Ping gesendet – das ist <b>kein Setup-Fehler</b>.' };
+const CONSENT_BING = { type:'info', ico:'🔒', text:'<b>Consent Mode (UET) prüfen:</b> Microsoft Advertising unterstützt einen eigenen Consent Mode. Der Status wird über <code>uetq</code>-Consent-Signale (<code>ad_storage</code>) gesetzt. Bei abgelehnter Einwilligung drosselt das UET-Tag die Datenerfassung – eingeschränkte oder fehlende Daten sind dann <b>kein Setup-Fehler</b>, sondern Folge der Einwilligung.' };
+
+const C = {
+  ga4: {
+    clientside: {
+      tools: ['DevTools → Network Tab', 'Tag Assistant'],
+      steps: [
+        'DevTools mit <b>F12</b> öffnen, auf den <b>Network</b>-Tab wechseln.',
+        'Im Filterfeld oben <code>collect</code> eingeben.',
+        'Die zu prüfende Aktion auf der Website auslösen.',
+        'In der gefilterten Liste nach einem Eintrag mit <code>/g/collect</code> in der URL suchen.',
+        'Eintrag anklicken → <b>Payload</b>-Tab oder URL-Parameter öffnen → Parameter prüfen.'
+      ],
+      endpoint: { url: 'https://www.google-analytics.com/g/collect', method: 'GET', filter: 'collect' },
+      recognize: 'URL enthält <code>/g/collect</code> und geht an <code>google-analytics.com</code> oder <code>analytics.google.com</code>. Methode ist GET.',
+      params: [
+        { key: 'tid',       name: 'Mess-ID',                    desc: 'GA4 Property Mess-ID',                                                ex: 'G-XXXXXXXXXX' },
+        { key: 'en',        name: 'Eventname',                  desc: 'Name des ausgelösten Events',                                         ex: 'purchase · add_to_cart · page_view' },
+        { key: 'ep.[name]', name: 'Eventparameter (Text)',       desc: 'Benutzerdefinierter Textparameter – Präfix ep. + Parametername',      ex: 'ep.currency=EUR · ep.item_category=Shoes' },
+        { key: 'epn.[name]',name: 'Eventparameter (Zahl)',       desc: 'Numerischer Parameter – Präfix epn. + Parametername',                ex: 'epn.value=29.99 · epn.quantity=2' }
+      ],
+      notes: [CONSENT_GOOGLE]
+    },
+    serverside: {
+      tools: ['DevTools → Network Tab', 'sGTM Preview', 'Tag Assistant'],
+      steps: [
+        'DevTools mit <b>F12</b> öffnen, auf den <b>Network</b>-Tab wechseln.',
+        'Im Filterfeld <code>collect</code> oder den Hostnamen deiner <b>sGTM-Domain</b> eingeben.',
+        'Die zu prüfende Aktion auslösen.',
+        'In der Liste nach einem Call suchen, der an <b>deine sGTM-Domain</b> geht (z.B. <code>collect.meindomain.de/g/collect</code>) – nicht an google-analytics.com.',
+        'Zusätzlich im <b>sGTM Preview</b>: Eingehenden GA4-Request unter "Incoming Requests" und GA4-Tag unter "Tags Fired" prüfen.'
+      ],
+      endpoint: { url: 'https://[deine-sGTM-Domain]/g/collect', method: 'GET', filter: 'collect (+ deine sGTM-Domain)' },
+      recognize: 'URL enthält <code>/g/collect</code>, aber der Hostname ist deine eigene sGTM-Domain – nicht google-analytics.com. Das ist das Erkennungsmerkmal für Serverside GA4.',
+      params: [
+        { key: 'tid',       name: 'Mess-ID',                    desc: 'GA4 Property Mess-ID',                                                ex: 'G-XXXXXXXXXX' },
+        { key: 'en',        name: 'Eventname',                  desc: 'Name des ausgelösten Events',                                         ex: 'purchase · add_to_cart · page_view' },
+        { key: 'ep.[name]', name: 'Eventparameter (Text)',       desc: 'Benutzerdefinierter Textparameter',                                   ex: 'ep.currency=EUR' },
+        { key: 'epn.[name]',name: 'Eventparameter (Zahl)',       desc: 'Numerischer Parameter',                                              ex: 'epn.value=29.99' }
+      ],
+      notes: [
+        { type:'info', ico:'ℹ️', text:'<b>Hinweis:</b> Der Browser sendet das GA4-Event an deinen sGTM. Im sGTM Preview siehst du unter "Tags Fired" das GA4-Tag, das durch den eingehenden Request ausgelöst wurde. Der sGTM leitet das Event dann intern an Google Analytics weiter.' },
+        CONSENT_GOOGLE_SS
+      ]
+    }
+  },
+
+  googleads: {
+    clientside: {
+      tools: ['DevTools → Network Tab'],
+      steps: [
+        'DevTools mit <b>F12</b> öffnen, auf den <b>Network</b>-Tab wechseln.',
+        'Im Filterfeld <code>pagead/conversion</code> eingeben.',
+        'Die Conversion-Aktion auf der Website auslösen.',
+        'In der Liste nach einem Call mit <code>/pagead/conversion/</code> in der URL suchen.',
+        'Den Call anklicken und die Parameter aus dem Query String ablesen.'
+      ],
+      endpoints: [
+        { url: 'https://googleads.g.doubleclick.net/pagead/conversion/[CONVERSION-ID]/', method: 'GET' },
+        { url: 'https://www.google.com/pagead/1p-conversion/[CONVERSION-ID]/', method: 'GET' }
+      ],
+      filter: 'pagead/conversion',
+      recognize: 'URL enthält <code>/pagead/conversion/</code> gefolgt von einer numerischen Conversion-ID. Call geht an <code>googleads.g.doubleclick.net</code> oder <code>google.com</code>.',
+      params: [
+        { key: 'URL-Pfad',     name: 'Conversion ID',    desc: 'Numerische ID direkt im URL-Pfad nach /conversion/', ex: '.../conversion/123456789/' },
+        { key: 'label',        name: 'Conversion Label', desc: 'Alphanumerische Zeichenkette, die den Conversion-Typ identifiziert', ex: 'AbCdEfGhIjKlMnOp' },
+        { key: 'value',        name: 'Conversionwert',   desc: 'Wert der Conversion (optional, je nach Konfiguration)', ex: '49.99' },
+        { key: 'currency_code',name: 'Währung',          desc: 'ISO-Währungscode (optional)', ex: 'EUR' }
+      ],
+      notes: [CONSENT_GOOGLE]
+    },
+    serverside: {
+      tools: ['sGTM Preview'],
+      steps: [
+        'Im <b>sGTM Preview</b>: Server-Container öffnen, Preview-Modus starten.',
+        'Die Conversion-Aktion auf der Website auslösen (das GA4-Event triggert den sGTM).',
+        'Im sGTM Preview unter <b>"Tags Fired"</b> nach dem Google Ads Conversion Tag suchen.',
+        'Das Tag anklicken → Conversion ID und Label in den Tag-Details prüfen.'
+      ],
+      endpoint: null,
+      recognize: 'Im sGTM Preview erscheint das Google Ads Conversion Tag unter "Tags Fired". Conversion ID und Label sind in den Tag-Details sichtbar. Kein direkter Browser-Call an Google Ads erwartet – jedoch siehe Hinweis.',
+      params: [
+        { key: 'Conversion ID', name: 'Conversion ID',    desc: 'Numerische ID – im sGTM Preview unter Tag-Details sichtbar', ex: '123456789' },
+        { key: 'label',         name: 'Conversion Label', desc: 'Alphanumerisches Label – im sGTM Preview sichtbar', ex: 'AbCdEfGhIjKlMnOp' },
+        { key: 'value',         name: 'Conversionwert',   desc: 'Wert der Conversion (optional)', ex: '49.99' },
+        { key: 'currency_code', name: 'Währung',          desc: 'ISO-Währungscode (optional)', ex: 'EUR' }
+      ],
+      notes: [
+        { type:'warn', ico:'⚠️', text:'<b>Wichtig:</b> Auch beim Serverside-Tracking sendet Google Ads in vielen Fällen trotzdem einen <b>Ping-Request über den Browser</b>. Calls an <code>googleads.g.doubleclick.net</code> oder <code>google.com/pagead/</code> im Network Tab sind deshalb kein Fehler – dieser Ping ist von Google gewollt und gehört zum Serverside-Setup dazu.' },
+        CONSENT_GOOGLE_SS
+      ]
+    }
+  },
+
+  floodlight: {
+    clientside: {
+      tools: ['DevTools → Network Tab'],
+      steps: [
+        'DevTools mit <b>F12</b> öffnen, auf den <b>Network</b>-Tab wechseln.',
+        'Im Filterfeld <code>ad.doubleclick.net</code> eingeben.',
+        'Die Conversion-Aktion auf der Website auslösen.',
+        'In der Liste nach einem Call an <code>ad.doubleclick.net/activity</code> suchen.',
+        'Den Call anklicken und die Parameter aus dem URL-Pfad (Semikolon-getrennt) ablesen.'
+      ],
+      endpoint: { url: 'https://ad.doubleclick.net/activity;src=[ID];type=[GROUP];cat=[ACTIVITY];...', method: 'GET', filter: 'ad.doubleclick.net' },
+      recognize: 'URL beginnt mit <code>ad.doubleclick.net/activity</code>. Parameter stehen im URL-Pfad als Semikolon-getrennte Schlüssel-Wert-Paare (z.B. <code>;src=123;type=abc;cat=xyz</code>).',
+      params: [
+        { key: 'src',         name: 'Advertiser ID',          desc: 'Numerische Advertiser-ID im Campaign Manager 360', ex: 'src=9876543' },
+        { key: 'type',        name: 'Group Tag String',        desc: 'Identifiziert die Floodlight-Aktivitätsgruppe', ex: 'type=checkout' },
+        { key: 'cat',         name: 'Activity Tag String',     desc: 'Identifiziert die spezifische Floodlight-Aktivität', ex: 'cat=purchase' },
+        { key: 'u1, u2, u3…', name: 'U-Parameter',            desc: 'Benutzerdefinierte Custom Variables für zusätzliche Daten', ex: 'u1=product123;u2=electronics' },
+        { key: 'ord',         name: 'Order String (Counting)', desc: 'Counting Method: Counter (Unique/Standard) = Zufallszahl · Counter (Per Session) = 1 · Sales = Transaktions-ID', ex: 'ord=8473628 (Unique) · ord=1 (Per Session) · ord=TXN-001 (Sales)' },
+        { key: 'qty',         name: 'Menge',                   desc: 'Anzahl der gekauften Einheiten – nur bei Sales-Aktivitäten', ex: 'qty=2' },
+        { key: 'cost',        name: 'Revenue',                 desc: 'Umsatzwert der Transaktion – nur bei Sales-Aktivitäten', ex: 'cost=89.98' }
+      ],
+      notes: [
+        { type:'info', ico:'ℹ️', text:'<b>Counting Method erkennen:</b> Das Feld <code>ord=</code> verrät die Zählmethode. Eine <b>zufällige Zahl</b> = Unique oder Standard Counter. Immer <code>1</code> = Per Session Counter. Eine <b>Transaktions-ID</b> = Sales-Aktivität.' },
+        CONSENT_GOOGLE
+      ]
+    },
+    serverside: {
+      tools: ['sGTM Preview'],
+      steps: [
+        'Im <b>sGTM Preview</b>: Server-Container öffnen, Preview-Modus starten.',
+        'Die Conversion-Aktion auf der Website auslösen (das GA4-Event triggert den sGTM).',
+        'Im sGTM Preview unter <b>"Tags Fired"</b> nach dem Floodlight Tag suchen.',
+        'Das Tag anklicken → Advertiser ID (src), Group Tag String (type), Activity Tag String (cat) und U-Parameter in den Tag-Details prüfen.'
+      ],
+      endpoint: null,
+      recognize: 'Im sGTM Preview erscheint das Floodlight Tag unter "Tags Fired". Die Parameter src, type und cat sind in den Tag-Details sichtbar. Kein direkter Browser-Call erwartet – jedoch siehe Hinweis.',
+      params: [
+        { key: 'src',         name: 'Advertiser ID',      desc: 'Numerische Advertiser-ID', ex: '9876543' },
+        { key: 'type',        name: 'Group Tag String',    desc: 'Floodlight-Aktivitätsgruppe', ex: 'checkout' },
+        { key: 'cat',         name: 'Activity Tag String', desc: 'Spezifische Floodlight-Aktivität', ex: 'purchase' },
+        { key: 'u1, u2…',     name: 'U-Parameter',         desc: 'Benutzerdefinierte Custom Variables', ex: 'product123 · electronics' },
+        { key: 'ord',         name: 'Order String',        desc: 'Counting Method – Zufallszahl / 1 / Transaktions-ID', ex: 'TXN-001' },
+        { key: 'qty / cost',  name: 'Menge / Revenue',     desc: 'Nur bei Sales-Aktivitäten relevant', ex: 'qty=2 · cost=89.98' }
+      ],
+      notes: [
+        { type:'warn', ico:'⚠️', text:'<b>Wichtig:</b> Ähnlich wie Google Ads kann Floodlight beim Serverside-Tracking in bestimmten Konfigurationen trotzdem einen <b>Ping-Request über den Browser</b> senden. Ein Call an <code>ad.doubleclick.net</code> im Network Tab bedeutet also nicht automatisch, dass das Serverside-Setup fehlerhaft ist.' },
+        CONSENT_GOOGLE_SS
+      ]
+    }
+  },
+
+  facebook: {
+    clientside: {
+      tools: ['DevTools → Network Tab'],
+      steps: [
+        'DevTools mit <b>F12</b> öffnen, auf den <b>Network</b>-Tab wechseln.',
+        'Im Filterfeld <code>facebook.com/tr</code> eingeben.',
+        'Die gewünschte Aktion auf der Website auslösen.',
+        'In der Liste nach einem Call an <code>www.facebook.com/tr</code> suchen.',
+        'Eintrag anklicken → Parameter je nach Methode im <b>Query String</b> (GET) oder im <b>Request Body / Payload</b> (POST) sichtbar.'
+      ],
+      endpoint: { url: 'https://www.facebook.com/tr/', method: 'GET/POST', filter: 'facebook.com/tr' },
+      recognize: 'URL enthält <code>facebook.com/tr</code>. Kann als GET (URL-Parameter) oder POST (Form-Body) kommen. Parameter <code>id=</code> enthält die Pixel-ID.',
+      params: [
+        { key: 'id',              name: 'Pixel-ID',        desc: 'Numerische Pixel-ID des Facebook Pixels', ex: '1234567890123456' },
+        { key: 'ev',              name: 'Eventname',       desc: 'Standard- oder Custom Event', ex: 'Purchase · AddToCart · ViewContent · Lead' },
+        { key: 'eid',             name: 'Event ID (Dedup)', desc: 'Eindeutige Event-ID zur Deduplikation mit der CAPI – muss bei Hybrid mit dem Serverside-Event übereinstimmen', ex: '1781538278_381_10534' },
+        { key: 'cd[currency]',   name: 'Währung',          desc: 'ISO-Währungscode (Custom Data)', ex: 'EUR' },
+        { key: 'cd[value]',      name: 'Wert',             desc: 'Monetärer Wert des Events (Custom Data)', ex: '49.99' },
+        { key: 'cd[content_type]',name:'Content Type',     desc: 'Art des Inhalts', ex: 'product · product_group' },
+        { key: 'cd[custom_param]',name:'Custom Parameter', desc: 'Weitere benutzerdefinierte Parameter mit cd[-Präfix', ex: 'cd[order_id]=TXN-001' }
+      ],
+      notes: []
+    },
+    serverside: {
+      tools: ['sGTM Preview'],
+      steps: [
+        'Im <b>sGTM Preview</b>: Server-Container öffnen, Preview-Modus starten.',
+        'Die gewünschte Aktion auf der Website auslösen (das GA4-Event triggert den sGTM).',
+        'Im sGTM Preview unter <b>"Tags Fired"</b> nach dem Meta (Facebook) Conversions API Tag suchen.',
+        'Das Tag anklicken → Eventname und custom_data-Parameter in den Tag-Details prüfen.',
+        'Kein <code>facebook.com/tr</code>-Call im Browser Network Tab erwartet (außer bei parallelem Clientside-Pixel).'
+      ],
+      endpoint: null,
+      recognize: 'Im sGTM Preview erscheint das Meta Conversions API Tag unter "Tags Fired". Der ausgehende API-Call geht serverseitig an <code>graph.facebook.com</code> – er ist im Browser Network Tab nicht sichtbar.',
+      params: [
+        { key: 'event_name',             name: 'Eventname',       desc: 'Name des Events (im sGTM Tag sichtbar)', ex: 'Purchase · AddToCart · ViewContent' },
+        { key: 'event_id',               name: 'Event ID (Dedup)', desc: 'Eindeutige Event-ID zur Deduplikation mit dem Pixel – muss bei Hybrid mit dem Clientside-Event übereinstimmen', ex: '1781538278_381_10534' },
+        { key: 'custom_data.currency',   name: 'Währung',          desc: 'ISO-Währungscode', ex: 'EUR' },
+        { key: 'custom_data.value',      name: 'Wert',             desc: 'Monetärer Wert des Events', ex: '49.99' },
+        { key: 'custom_data.[name]',     name: 'Custom Parameter', desc: 'Weitere benutzerdefinierte Parameter unter custom_data', ex: 'custom_data.order_id=TXN-001' }
+      ],
+      notes: [
+        { type:'ok', ico:'✅', text:'<b>Kein Browser-Call erwartet:</b> Beim reinen Serverside-Setup über die Conversions API sendet kein Pixel im Browser. Siehst du trotzdem einen <code>facebook.com/tr</code>-Call, ist zusätzlich ein clientseitiger Pixel aktiv (Hybrid-Setup).' }
+      ]
+    },
+    hybrid: {
+      isHybrid: true,
+      tools: ['DevTools → Network Tab', 'sGTM Preview'],
+      notes: [
+        { type:'purple', ico:'🔄', text:'<b>Hybrid-Setup:</b> Bei Facebook laufen <b>Pixel (Browser)</b> und <b>Conversions API (sGTM)</b> parallel und melden dieselbe Aktion. Anders als bei LinkedIn wird <b>nicht</b> mit zwei verschiedenen IDs gearbeitet – stattdessen muss der <b>Eventname auf beiden Seiten identisch</b> sein (z.B. beide <code>Purchase</code>).' },
+        { type:'warn', ico:'🔑', text:'<b>Event-Deduplikation:</b> Damit Facebook die Aktion nicht doppelt zählt, müssen beide Calls eine <b>übereinstimmende Event ID</b> mitsenden – clientside als <code>eid</code>, serverside als <code>event_id</code>. <b>Beide Werte müssen exakt gleich sein.</b> Stimmen sie nicht überein, wird die Conversion doppelt gemessen.' }
+      ],
+      client: {
+        steps: [
+          'DevTools <b>F12</b> → <b>Network</b>-Tab.',
+          'Filter: <code>facebook.com/tr</code>',
+          'Aktion auslösen → Call an <code>www.facebook.com/tr</code> suchen.',
+          '<code>ev=</code> (Eventname) und <code>eid=</code> (Event ID) notieren.'
+        ],
+        endpoint: { url: 'https://www.facebook.com/tr/', method: 'GET/POST', filter: 'facebook.com/tr' },
+        params: [
+          { key: 'id',  name: 'Pixel-ID',         ex: '1234567890123456' },
+          { key: 'ev',  name: 'Eventname',        ex: 'Purchase' },
+          { key: 'eid', name: 'Event ID (Dedup)', ex: '1781538278_381_10534' }
+        ]
+      },
+      server: {
+        steps: [
+          '<b>sGTM Preview</b> starten.',
+          'Aktion auslösen → unter "Tags Fired" Meta Conversions API Tag suchen.',
+          '<code>event_name</code> und <code>event_id</code> in den Tag-Details prüfen.',
+          'Werte mit der Clientside-Seite vergleichen: <b>Eventname und Event ID müssen übereinstimmen.</b>'
+        ],
+        endpoint: { url: 'Meta Conversions API → graph.facebook.com (sGTM-intern – im Browser nicht sichtbar)', method: null, filter: null },
+        params: [
+          { key: 'event_name', name: 'Eventname',        ex: 'Purchase' },
+          { key: 'event_id',   name: 'Event ID (Dedup)', ex: '1781538278_381_10534' }
+        ]
+      },
+      footnotes: [
+        { type:'ok', ico:'✅', text:'<b>Korrekt eingerichtet, wenn:</b> Beide Calls feuern, der <b>Eventname identisch</b> ist UND <code>eid</code> (Pixel) exakt gleich <code>event_id</code> (CAPI) ist. Nur dann dedupliziert Facebook sauber.' }
+      ]
+    }
+  },
+
+  bing: {
+    clientside: {
+      tools: ['DevTools → Network Tab'],
+      steps: [
+        'DevTools mit <b>F12</b> öffnen, auf den <b>Network</b>-Tab wechseln.',
+        'Im Filterfeld <code>bat.bing</code> eingeben.',
+        'Die gewünschte Aktion auf der Website auslösen.',
+        'In der Liste nach einem Call an <code>bat.bing.com/action/0</code> suchen.',
+        'Den Call anklicken und die URL-Parameter ablesen.'
+      ],
+      endpoint: { url: 'https://bat.bing.com/action/0', method: 'GET', filter: 'bat.bing' },
+      recognize: 'URL enthält <code>bat.bing.com</code>. Der Endpunkt für Conversions ist <code>/action/0</code>.',
+      params: [
+        { key: 'ti',  name: 'Tag ID (UET)',   desc: 'Universal Event Tracking Tag-ID', ex: '12345678' },
+        { key: 'evt', name: 'Eventname',      desc: 'Name des Custom Events', ex: 'purchase · checkout · add_to_cart' },
+        { key: 'el',  name: 'Event Label',    desc: 'Optionales Label für den Event', ex: 'Purchase Confirmed' },
+        { key: 'gv',  name: 'Goal Value',     desc: 'Monetärer Wert des Events (optional)', ex: '49.99' },
+        { key: 'gc',  name: 'Goal Currency',  desc: 'Währung des Werts (optional)', ex: 'EUR' }
+      ],
+      notes: [CONSENT_BING]
+    },
+    serverside: {
+      tools: ['sGTM Preview'],
+      steps: [
+        'Im <b>sGTM Preview</b>: Server-Container öffnen, Preview-Modus starten.',
+        'Die gewünschte Aktion auf der Website auslösen (das GA4-Event triggert den sGTM).',
+        'Im sGTM Preview unter <b>"Tags Fired"</b> nach dem Microsoft Advertising / Bing Ads UET Tag suchen.',
+        'Das Tag anklicken → Tag ID und Eventname in den Tag-Details prüfen.'
+      ],
+      endpoint: null,
+      recognize: 'Im sGTM Preview erscheint das Microsoft Advertising UET Tag unter "Tags Fired". Der ausgehende API-Call ist im Browser nicht sichtbar.',
+      params: [
+        { key: 'ti',     name: 'Tag ID (UET)',  desc: 'Universal Event Tracking Tag-ID', ex: '12345678' },
+        { key: 'evt',    name: 'Eventname',     desc: 'Name des Custom Events', ex: 'purchase · add_to_cart' },
+        { key: 'gv / gc',name: 'Wert / Währung',desc: 'Monetärer Wert und Währungscode (optional)', ex: 'gv=49.99 · gc=EUR' }
+      ],
+      notes: [CONSENT_BING]
+    }
+  },
+
+  linkedin: {
+    clientside: {
+      tools: ['DevTools → Network Tab'],
+      steps: [
+        'DevTools mit <b>F12</b> öffnen, auf den <b>Network</b>-Tab wechseln.',
+        'Im Filterfeld <code>px.ads.linkedin</code> eingeben.',
+        'Die gewünschte Aktion auf der Website auslösen.',
+        'In der Liste nach einem Call an <code>px.ads.linkedin.com/collect</code> suchen.',
+        'Den Call anklicken und die URL-Parameter ablesen.'
+      ],
+      endpoint: { url: 'https://px.ads.linkedin.com/collect', method: 'GET', filter: 'px.ads.linkedin' },
+      recognize: 'URL geht an <code>px.ads.linkedin.com/collect</code>. Parameter <code>conversionId=</code> enthält die Clientside Conversion-ID.',
+      params: [
+        { key: 'pid',        name: 'Partner ID',              desc: 'LinkedIn Partner-ID (Insight Tag ID)', ex: '1234567' },
+        { key: 'conversionId',name:'Conversion ID (Clientside)',desc:'Numerische ID der Clientside-Conversion', ex: '123456' },
+        { key: 'eventId',    name: 'Event ID (Dedup)',        desc: 'Eindeutige Event-ID zur Deduplikation mit der CAPI – muss bei Hybrid mit dem Serverside-Event übereinstimmen', ex: '1781538278_381_10534' },
+        { key: 'fmt',        name: 'Format',                  desc: 'Immer js bei JavaScript-basierten Calls', ex: 'fmt=js' }
+      ],
+      notes: []
+    },
+    serverside: {
+      tools: ['sGTM Preview'],
+      steps: [
+        'Im <b>sGTM Preview</b>: Server-Container öffnen, Preview-Modus starten.',
+        'Die gewünschte Aktion auf der Website auslösen (das GA4-Event triggert den sGTM).',
+        'Im sGTM Preview das Event anklicken → Abschnitt <b>"Outgoing HTTP Requests from Server"</b> prüfen: Dort muss ein Eintrag mit <code>api.linkedin.com/rest/conversionEvents</code> und dem Status <b>POST - 201</b> erscheinen.',
+        'Den ausgehenden Request anklicken → <b>"HTTP Request Details"</b> öffnen sich. Im Abschnitt <b>"Request Body"</b> die Parameter prüfen (siehe unten).',
+        'Bei Fehler: <b>"Console"</b>-Tab im sGTM Preview öffnen – dort erscheinen Fehlermeldungen der LinkedIn CAPI.'
+      ],
+      endpoint: null,
+      recognize: 'Erfolgreicher Call: Unter "Outgoing HTTP Requests from Server" erscheint <code>api.linkedin.com/rest/conversionEvents</code> mit Status <b>POST - 201</b>. Den Request anklicken, um den Request Body einzusehen.',
+      params: [
+        { key: 'conversion',                name: 'Conversion URN',          desc: 'Enthält die Serverside Conversion-ID als LinkedIn URN', ex: 'urn:lla:llaPartnerConversion:654321' },
+        { key: 'eventId',                   name: 'Event ID (Dedup)',        desc: 'Eindeutige Event-ID zur Deduplikation mit dem Pixel – muss bei Hybrid mit dem Clientside-Event übereinstimmen', ex: '1781538278_381_10534' },
+        { key: 'user.userIds[].idType',     name: 'User-ID Typ',             desc: 'Art der übermittelten User-ID – muss einer der 4 akzeptierten Typen sein', ex: 'LINKEDIN FIRST PARTY ADS TRACKING UUID' },
+        { key: 'user.userIds[].idValue',    name: 'User-ID Wert',            desc: 'Der tatsächliche Wert der User-ID (beim Test: "TEST")', ex: 'TEST · oder echter UUID-Wert' },
+        { key: 'conversionValue.currencyCode', name: 'Währung',              desc: 'ISO-Währungscode des Conversion-Werts', ex: 'EUR' },
+        { key: 'conversionValue.amount',    name: 'Betrag',                  desc: 'Monetärer Wert der Conversion', ex: '0 · 49.99' }
+      ],
+      notes: [
+        { type:'ok', ico:'✅', text:'<b>Erfolg erkennbar an:</b> Status <b>POST - 201</b> unter "Outgoing HTTP Requests from Server" UND im Request Body enthält <code>user.userIds</code> mindestens einen Eintrag mit <code>idType</code> und <code>idValue</code>.' },
+        { type:'error', ico:'🚨', text:'<b>Häufiger Fehler – fehlende User-ID (li_fat_id):</b> Wenn im Console-Tab folgende Meldung erscheint:<span class="err-code">"No conversion event was sent to LinkedIn CAPI. Reason: You must set 1 out of the 4 acceptable IDs (SHA256_EMAIL, LINKEDIN_FIRST_PARTY_ADS_TRACKING_UUID, ACXIOM_ID, ORACLE_MOAT_ID)"</span>wurde keine User-ID an die CAPI übermittelt. <b>Lösung für den Test:</b> Die Seite mit dem URL-Parameter <code>?li_fat_id=TEST</code> aufrufen, um einen LinkedIn-Kampagneneinstieg zu simulieren. <b>Im produktiven Betrieb</b> muss der Nutzer über eine LinkedIn-Kampagne kommen, damit der Parameter automatisch gesetzt wird.' }
+      ]
+    },
+    hybrid: {
+      isHybrid: true,
+      tools: ['DevTools → Network Tab', 'sGTM Preview'],
+      notes: [
+        { type:'purple', ico:'🔄', text:'<b>Hybrid-Setup:</b> Bei LinkedIn werden für eine Conversion <b>zwei verschiedene Conversion-IDs</b> verwendet. Eine für den clientseitigen Pixel (Browser), eine für das serverseitige Tracking (sGTM). <b>Beide Calls müssen feuern.</b> Fehlt einer, ist dieser Kanal nicht korrekt eingerichtet.' },
+        { type:'warn', ico:'🔑', text:'<b>Event-Deduplikation:</b> Damit LinkedIn die Aktion nicht doppelt zählt, müssen beide Calls eine <b>übereinstimmende Event ID</b> (<code>eventId</code>) mitsenden. <b>Beide Werte müssen exakt gleich sein</b> – clientside im Pixel-Call, serverside im CAPI Request Body.' }
+      ],
+      client: {
+        steps: [
+          'DevTools <b>F12</b> → <b>Network</b>-Tab.',
+          'Filter: <code>px.ads.linkedin</code>',
+          'Aktion auslösen → Call an <code>px.ads.linkedin.com/collect</code> suchen.',
+          '<code>conversionId=</code> prüfen: <b>Clientside Conversion-ID</b> erwartet (z.B. 123456).',
+          '<code>eventId=</code> notieren – wird für den Dedup-Abgleich gebraucht.'
+        ],
+        endpoint: { url: 'https://px.ads.linkedin.com/collect', method: 'GET', filter: 'px.ads.linkedin' },
+        params: [
+          { key: 'pid',         name: 'Partner ID',              ex: '1234567' },
+          { key: 'conversionId',name: 'Conversion ID (Clientside)', ex: '123456' },
+          { key: 'eventId',     name: 'Event ID (Dedup)',        ex: '1781538278_381_10534' }
+        ]
+      },
+      server: {
+        steps: [
+          '<b>sGTM Preview</b> starten.',
+          'Aktion auslösen → unter "Tags Fired" LinkedIn Conversions API Tag suchen.',
+          'Conversion-ID in den Tag-Details prüfen: <b>Serverside Conversion-ID</b> erwartet (z.B. 654321).',
+          '<code>eventId</code> mit der Clientside-Seite vergleichen: <b>muss übereinstimmen.</b>',
+          '<b>"Console"</b>-Tab im sGTM Preview öffnen → auf Fehlermeldungen der LinkedIn CAPI prüfen.'
+        ],
+        endpoint: { url: 'LinkedIn Conversions API (sGTM-intern – im Browser nicht sichtbar)', method: null, filter: null },
+        params: [
+          { key: 'conversionId', name: 'Conversion ID (Serverside)', ex: '654321' },
+          { key: 'eventId',      name: 'Event ID (Dedup)',           ex: '1781538278_381_10534' }
+        ]
+      },
+      footnotes: [
+        { type:'ok', ico:'✅', text:'<b>Korrekt eingerichtet, wenn:</b> Beide Calls feuern, der Pixel die <b>Clientside Conversion-ID</b> (z.B. 123456) und die CAPI die <b>Serverside Conversion-ID</b> (z.B. 654321) sendet, die <code>eventId</code> auf beiden Seiten <b>exakt übereinstimmt</b> UND der CAPI-Request mindestens eine User-ID enthält (kein Fehler im Console-Tab).' },
+        { type:'error', ico:'🚨', text:'<b>Häufiger Fehler – fehlende User-ID (li_fat_id):</b> Wenn im Console-Tab folgende Meldung erscheint:<span class="err-code">"No conversion event was sent to LinkedIn CAPI. Reason: You must set 1 out of the 4 acceptable IDs (SHA256_EMAIL, LINKEDIN_FIRST_PARTY_ADS_TRACKING_UUID, ACXIOM_ID, ORACLE_MOAT_ID)"</span>wurde keine User-ID an die CAPI übermittelt. <b>Lösung für den Test:</b> Die Seite einmal mit dem URL-Parameter <code>?li_fat_id=TEST</code> aufrufen, um einen LinkedIn-Kampagneneinstieg zu simulieren. <b>Im produktiven Betrieb</b> muss der Nutzer über eine LinkedIn-Kampagne kommen, damit der Parameter automatisch gesetzt wird.' }
+      ]
+    }
+  }
+};
+
+// ------- NAVIGATION -------
+
+function selectVendor(vendor) {
+  state.vendor = vendor;
+  const v = VENDORS[vendor];
+  document.getElementById('type-grid').innerHTML = v.types.map(t =>
+    `<button class="t-btn" onclick="selectType('${t.id}')">
+       <span class="t-btn-name">${t.label}</span>
+       <span class="t-btn-desc">${t.desc}</span>
+     </button>`
+  ).join('');
+  show('step2'); hide('step1');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function selectType(type) {
+  state.type = type;
+  const v = VENDORS[state.vendor];
+  const typLabel = v.types.find(t => t.id === type).label;
+  document.getElementById('breadcrumb').innerHTML =
+    `<span class="bc-item"><span class="bc-dot" style="background:${v.color}"></span>${v.name}</span>
+     <span class="bc-sep">›</span>
+     <span class="bc-current">${typLabel}</span>`;
+  const content = C[state.vendor][type];
+  document.getElementById('result-content').innerHTML = content.isHybrid
+    ? renderHybrid(content) : renderResult(content);
+  show('step3'); hide('step2');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function goBack(n) {
+  hide('step1'); hide('step2'); hide('step3');
+  show('step' + n);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function show(id) { document.getElementById(id).classList.remove('hidden'); }
+function hide(id) { document.getElementById(id).classList.add('hidden'); }
+
+// ------- RENDERERS -------
+
+function card(icon, title, body) {
+  return `<div class="r-card">
+    <div class="r-card-head"><div class="r-card-ico">${icon}</div><div class="r-card-title">${title}</div></div>
+    <div class="r-card-body">${body}</div>
+  </div>`;
+}
+
+function renderTools(tools) {
+  return tools.map(t => `<span class="tool-tag">${t}</span>`).join('');
+}
+
+function renderSteps(steps) {
+  return `<ul class="steps-list">${steps.map((s,i) =>
+    `<li><div class="s-num">${i+1}</div><div>${s}</div></li>`
+  ).join('')}</ul>`;
+}
+
+function renderEndpoint(ep, extraEndpoints, filter) {
+  let html = '';
+  const eps = extraEndpoints || (ep ? [ep] : []);
+  eps.forEach(e => {
+    const mClass = e.method === 'GET' ? 'm-get' : e.method === 'POST' ? 'm-post' : 'm-both';
+    html += `<div class="ep-label">Endpoint</div>
+    <div class="ep-box" style="margin-bottom:8px">
+      <span class="ep-url">${e.url}</span>
+      ${e.method ? `<span class="m-badge ${mClass}">${e.method}</span>` : ''}
+    </div>`;
+  });
+  const f = filter || (ep && ep.filter);
+  if (f) html += `<div class="filter-box"><span class="f-label">Network-Filter</span><span class="f-val">${f}</span></div>`;
+  return html;
+}
+
+function renderParams(params, mini) {
+  if (mini) {
+    return `<table class="param-table"><tbody>${params.map(p =>
+      `<tr>
+        <td style="width:40%"><span class="p-key">${p.key}</span></td>
+        <td><div class="p-name">${p.name}</div><span class="p-ex">z.B. ${p.ex}</span></td>
+      </tr>`
+    ).join('')}</tbody></table>`;
+  }
+  return `<table class="param-table">
+    <thead><tr><th style="width:30%">Parameter</th><th>Bedeutung</th></tr></thead>
+    <tbody>${params.map(p =>
+      `<tr>
+        <td><span class="p-key">${p.key}</span></td>
+        <td><div class="p-name">${p.name}</div><div class="p-desc">${p.desc}</div><span class="p-ex">z.B. ${p.ex}</span></td>
+      </tr>`
+    ).join('')}</tbody>
+  </table>`;
+}
+
+function renderNotes(notes) {
+  return (notes || []).map(n => {
+    const cls = {warn:'n-warn',info:'n-info',ok:'n-ok',purple:'n-purple',error:'n-error'}[n.type]||'n-info';
+    return `<div class="note ${cls}"><span class="note-ico">${n.ico}</span><div>${n.text}</div></div>`;
+  }).join('');
+}
+
+function renderResult(c) {
+  let html = '';
+  html += card('🛠️', 'Welche Tools werden benötigt?', renderTools(c.tools));
+  html += card('🔍', 'Wo finde ich die Tracking-Aufrufe?', renderSteps(c.steps));
+
+  let epBody = '';
+  if (c.recognize) epBody += `<p class="recognize-text">${c.recognize}</p>`;
+  if (c.endpoint) {
+    epBody += renderEndpoint(c.endpoint, null, null);
+  } else if (c.endpoints) {
+    epBody += renderEndpoint(null, c.endpoints, c.filter);
+  } else {
+    epBody += `<p style="font-size:13px;color:var(--t2)">Der Tracking-Call ist im Browser Network Tab nicht direkt sichtbar. Prüfung erfolgt ausschließlich im sGTM Preview.</p>`;
+  }
+  html += card('🔗', 'Woran erkenne ich den Tracking-Aufruf?', epBody);
+  html += card('📋', 'Welche Parameter muss ich prüfen?', renderParams(c.params, false));
+  html += renderNotes(c.notes);
+  return html;
+}
+
+function renderHybrid(c) {
+  let html = '';
+  html += card('🛠️', 'Welche Tools werden benötigt?', renderTools(c.tools));
+  html += renderNotes(c.notes);
+
+  const cl = c.client, sv = c.server;
+  const clEp = cl.endpoint;
+  const svEp = sv.endpoint;
+
+  html += card('🔗', 'Beide Calls prüfen', `<div class="hybrid-grid">
+      <div class="hybrid-col h-client">
+        <div class="hybrid-col-title">① Clientside – Browser</div>
+        ${renderSteps(cl.steps)}
+        <div class="ep-label" style="margin-top:12px">Endpoint</div>
+        <div class="ep-box" style="margin-bottom:8px">
+          <span class="ep-url">${clEp.url}</span>
+          <span class="m-badge m-get">${clEp.method}</span>
+        </div>
+        ${clEp.filter ? `<div class="filter-box" style="margin-bottom:12px"><span class="f-label">Filter</span><span class="f-val">${clEp.filter}</span></div>` : ''}
+        <div class="ep-label">Parameter</div>
+        ${renderParams(cl.params, true)}
+      </div>
+      <div class="hybrid-col h-server">
+        <div class="hybrid-col-title">② Serverside – sGTM</div>
+        ${renderSteps(sv.steps)}
+        <div class="ep-label" style="margin-top:12px">Wo prüfen</div>
+        <div class="ep-box" style="margin-bottom:12px">
+          <span class="ep-url">${svEp.url}</span>
+        </div>
+        <div class="ep-label">Parameter</div>
+        ${renderParams(sv.params, true)}
+      </div>
+    </div>
+  `);
+  if (c.footnotes) html += renderNotes(c.footnotes);
+  return html;
+}
+</script>
+</body>
+</html>
